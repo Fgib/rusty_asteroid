@@ -23,7 +23,7 @@ impl DifficultySettings {
     pub fn normal() -> Self {
         Self {
             name: "Normal".to_string(),
-            asteroid_spawn_rate: 0.8,
+            asteroid_spawn_rate: 0.75,
             asteroid_speed_multiplier: 2.0,
             player_speed_multiplier: 0.6,
             bullet_speed_multiplier: 0.8,
@@ -33,7 +33,7 @@ impl DifficultySettings {
     pub fn hard() -> Self {
         Self {
             name: "Hard".to_string(),
-            asteroid_spawn_rate: 0.5,
+            asteroid_spawn_rate: 0.4,
             asteroid_speed_multiplier: 2.5,
             player_speed_multiplier: 0.5,
             bullet_speed_multiplier: 0.7,
@@ -43,7 +43,7 @@ impl DifficultySettings {
     pub fn insane() -> Self {
         Self {
             name: "Insane".to_string(),
-            asteroid_spawn_rate: 0.3,
+            asteroid_spawn_rate: 0.2,
             asteroid_speed_multiplier: 3.0,
             player_speed_multiplier: 0.4,
             bullet_speed_multiplier: 0.6,
