@@ -2,7 +2,8 @@ name: Build Check
 
 on:
   push:
-    branches: [main, master]
+    tags:
+      - "v*"
   pull_request:
     branches: [main, master]
 
@@ -27,7 +28,7 @@ jobs:
           sudo apt-get install -y libasound2-dev libudev-dev pkg-config
 
       - name: Cache cargo
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
