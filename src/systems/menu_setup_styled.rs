@@ -15,7 +15,7 @@ pub fn setup_main_menu_styled(
         let window_height = window.height();
 
         commands.spawn((
-            Text::new("ASTEROID BLASTER"),
+            Text::new("RUSTY ASTEROID"),
             TextFont {
                 font_size: 48.0,
                 ..default()
@@ -53,6 +53,25 @@ pub fn setup_main_menu_styled(
             MainMenu,
         );
 
+        // Settings button
+        spawn_button_with_text(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            window_width,
+            window_height,
+            button_mesh.clone(),
+            ButtonWithText::new(
+                "SETTINGS",
+                MenuAction::Settings,
+                Vec2::new(200.0, 50.0),
+                Color::srgb(2.0, 2.0, 2.5),
+                24.0,
+                Vec3::new(0.0, -70.0, 0.0),
+            ),
+            MainMenu,
+        );
+
         // Exit button
         spawn_button_with_text(
             &mut commands,
@@ -67,7 +86,7 @@ pub fn setup_main_menu_styled(
                 Vec2::new(200.0, 50.0),
                 Color::srgb(2.5, 1.5, 1.5),
                 24.0,
-                Vec3::new(0.0, -90.0, 0.0),
+                Vec3::new(0.0, -120.0, 0.0),
             ),
             MainMenu,
         );

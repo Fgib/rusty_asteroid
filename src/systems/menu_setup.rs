@@ -20,7 +20,7 @@ pub fn setup_main_menu(mut commands: Commands) {
         .with_children(|parent| {
             // Title
             parent.spawn((
-                Text::new("ASTEROID BLASTER"),
+                Text::new("Rusty Asteroid"),
                 TextFont {
                     font_size: 48.0,
                     ..default()

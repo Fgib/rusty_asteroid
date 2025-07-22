@@ -8,5 +8,31 @@ pub struct LivesText;
 
 #[derive(Component)]
 pub struct HeartUI {
-    pub heart_index: usize, // Which heart this is (0, 1, 2)
+    pub heart_index: usize,
+}
+
+#[derive(Component)]
+pub struct PowerUpDisplay;
+
+// Menu UI components
+#[derive(Component, Clone)]
+pub struct MenuUI;
+
+#[derive(Component, Clone)]
+pub struct PauseUI;
+
+// Settings button types
+#[derive(Component)]
+pub enum SettingsButton {
+    BloomToggle,
+    VsyncToggle,
+    Back,
+}
+
+// Pause button types
+#[derive(Component)]
+pub enum PauseButton {
+    Resume,
+    Settings,
+    MainMenu,
 }

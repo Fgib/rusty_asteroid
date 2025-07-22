@@ -21,6 +21,9 @@ pub fn menu_button_system(
                 MenuAction::DifficultySelect => {
                     next_state.set(GameState::DifficultySelect);
                 }
+                MenuAction::Settings => {
+                    next_state.set(GameState::Settings);
+                }
                 MenuAction::SetDifficulty(difficulty_name) => {
                     *difficulty = match difficulty_name.as_str() {
                         "Easy" => DifficultySettings::easy(),
@@ -39,6 +42,21 @@ pub fn menu_button_system(
                 }
                 MenuAction::Exit => {
                     exit.write(AppExit::Success);
+                }
+                MenuAction::Resume => {
+                    next_state.set(GameState::Playing);
+                }
+                MenuAction::MainMenu => {
+                    next_state.set(GameState::MainMenu);
+                }
+                MenuAction::BloomToggle => {
+                    // This should be handled by the styled system
+                }
+                MenuAction::VsyncToggle => {
+                    // This should be handled by the styled system
+                }
+                MenuAction::Back => {
+                    next_state.set(GameState::MainMenu);
                 }
             },
             Interaction::Hovered => {

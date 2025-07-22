@@ -15,6 +15,7 @@ pub fn mesh_menu_button_system(
     mut next_state: ResMut<NextState<GameState>>,
     mut difficulty: ResMut<DifficultySettings>,
     mut exit: EventWriter<AppExit>,
+    mut settings: ResMut<GameSettings>,
 ) {
     if let Ok(window) = windows.single() {
         if let Ok((camera, camera_transform)) = camera_query.single() {
@@ -62,6 +63,9 @@ pub fn mesh_menu_button_system(
                                 MenuAction::DifficultySelect => {
                                     next_state.set(GameState::DifficultySelect);
                                 }
+                                MenuAction::Settings => {
+                                    next_state.set(GameState::Settings);
+                                }
                                 MenuAction::SetDifficulty(difficulty_name) => {
                                     *difficulty = match difficulty_name.as_str() {
                                         "Easy" => DifficultySettings::easy(),
@@ -80,6 +84,25 @@ pub fn mesh_menu_button_system(
                                 }
                                 MenuAction::Exit => {
                                     exit.write(AppExit::Success);
+                                }
+                                MenuAction::Resume => {
+                                    next_state.set(GameState::Playing);
+                                }
+                                MenuAction::MainMenu => {
+                                    next_state.set(GameState::MainMenu);
+                                }
+                                MenuAction::BloomToggle => {
+                                    settings.graphics.bloom_enabled =
+                                        !settings.graphics.bloom_enabled;
+                                    settings.save();
+                                }
+                                MenuAction::VsyncToggle => {
+                                    settings.graphics.vsync_enabled =
+                                        !settings.graphics.vsync_enabled;
+                                    settings.save();
+                                }
+                                MenuAction::Back => {
+                                    next_state.set(GameState::MainMenu);
                                 }
                             }
                         }

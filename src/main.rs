@@ -25,6 +25,8 @@ fn main() {
         .insert_resource(DifficultySettings::default())
         .insert_resource(PlayerPowerUps::default())
         .insert_resource(PowerUpSpawnTimer::default())
+        .insert_resource(GameSettings::load())
+        .insert_resource(SaveData::load())
         .insert_resource(AsteroidSpawnTimer {
             timer: Timer::from_seconds(2.0, TimerMode::Repeating),
         })
@@ -36,11 +38,15 @@ fn main() {
         // Menu state systems
         .add_systems(OnEnter(GameState::MainMenu), setup_main_menu_styled)
         .add_systems(OnExit(GameState::MainMenu), cleanup_styled_menu)
+        .add_systems(OnEnter(GameState::Settings), setup_settings_menu)
+        .add_systems(OnExit(GameState::Settings), cleanup_settings_menu)
         .add_systems(
             OnEnter(GameState::DifficultySelect),
             setup_difficulty_menu_styled,
         )
         .add_systems(OnExit(GameState::DifficultySelect), cleanup_styled_menu)
+        .add_systems(OnEnter(GameState::Paused), setup_pause_menu)
+        .add_systems(OnExit(GameState::Paused), cleanup_pause_menu)
         // Game state systems
         .add_systems(
             OnEnter(GameState::Playing),
@@ -69,8 +75,13 @@ fn main() {
                 update_lives_display,
                 update_heart_display,
                 update_powerup_display, // New power-up UI
+                save_game_progress,     // Save system
             )
                 .run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            Update,
+            pause_input_system.run_if(in_state(GameState::Playing).or(in_state(GameState::Paused))),
         )
         // Game Over state systems
         .add_systems(OnEnter(GameState::GameOver), setup_game_over_menu_styled)
@@ -81,8 +92,12 @@ fn main() {
             mesh_menu_button_system.run_if(
                 in_state(GameState::MainMenu)
                     .or(in_state(GameState::DifficultySelect))
-                    .or(in_state(GameState::GameOver)),
+                    .or(in_state(GameState::GameOver))
+                    .or(in_state(GameState::Paused))
+                    .or(in_state(GameState::Settings)),
             ),
         )
+        .add_systems(Update, apply_graphics_settings)
+        .add_systems(OnEnter(GameState::GameOver), save_on_game_over)
         .run();
 }

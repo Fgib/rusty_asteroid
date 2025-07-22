@@ -20,10 +20,16 @@ pub enum MenuAction {
     #[allow(dead_code)]
     StartGame,
     DifficultySelect,
+    Settings,
     SetDifficulty(String), // difficulty name
     PlayAgain,
     QuitToMenu,
     Exit,
+    Resume,
+    MainMenu,
+    BloomToggle,
+    VsyncToggle,
+    Back,
 }
 
 // Tag components for different UI screens

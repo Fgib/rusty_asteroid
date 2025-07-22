@@ -112,17 +112,51 @@ pub fn spawn_asteroids(
 
     if spawn_timer.timer.just_finished() {
         if let Ok(window) = windows.single() {
+            let half_width = window.width() / 2.0;
             let half_height = window.height() / 2.0;
 
-            // Random spawn position at the top of the screen
-            let x = (fastrand::f32() - 0.5) * window.width();
-            let y = half_height + 50.0;
+            // Choose random side: 0=top, 1=right, 2=bottom, 3=left
+            let side = fastrand::u32(0..4);
+            let spawn_offset = 50.0; // Distance outside screen edge to spawn
 
-            // Random velocity towards the bottom with some randomness
-            let velocity_x =
-                (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
-            let velocity_y = -ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
-                - fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+            let (spawn_pos, velocity) = match side {
+                0 => {
+                    // Top side - spawn above screen, move towards center with downward bias
+                    let x = (fastrand::f32() - 0.5) * window.width();
+                    let y = half_height + spawn_offset;
+                    let velocity_x = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                    let velocity_y = -ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
+                        - fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
+                    (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
+                }
+                1 => {
+                    // Right side - spawn right of screen, move towards center with leftward bias
+                    let x = half_width + spawn_offset;
+                    let y = (fastrand::f32() - 0.5) * window.height();
+                    let velocity_x = -ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
+                        - fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
+                    let velocity_y = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                    (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
+                }
+                2 => {
+                    // Bottom side - spawn below screen, move towards center with upward bias
+                    let x = (fastrand::f32() - 0.5) * window.width();
+                    let y = -half_height - spawn_offset;
+                    let velocity_x = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                    let velocity_y = ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
+                        + fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
+                    (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
+                }
+                _ => {
+                    // Left side - spawn left of screen, move towards center with rightward bias
+                    let x = -half_width - spawn_offset;
+                    let y = (fastrand::f32() - 0.5) * window.height();
+                    let velocity_x = ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
+                        + fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
+                    let velocity_y = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                    (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
+                }
+            };
 
             let size = generate_asteroid_size();
             let radius = size as f32 * 5.0; // Base radius of 5 units per size level
@@ -141,10 +175,10 @@ pub fn spawn_asteroids(
             commands.spawn((
                 Mesh2d(meshes.add(create_asteroid_mesh(size, radius))),
                 MeshMaterial2d(materials.add(ColorMaterial::from(asteroid_color))),
-                Transform::from_translation(Vec3::new(x, y, 0.0)),
+                Transform::from_translation(Vec3::new(spawn_pos.x, spawn_pos.y, 0.0)),
                 Asteroid { size },
                 health,
-                Velocity(Vec2::new(velocity_x, velocity_y)),
+                Velocity(velocity),
                 RotationVelocity::random_slow(), // Add random rotation to asteroids
                 Wraparound,                      // Enable wraparound for asteroids
             ));
