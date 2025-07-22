@@ -8,6 +8,7 @@ pub mod menu;
 pub mod menu_button_mesh;
 pub mod physics;
 pub mod player;
+pub mod powerup;
 pub mod rotation_velocity;
 pub mod ui;
 
@@ -21,5 +22,6 @@ pub use menu::*;
 pub use menu_button_mesh::*;
 pub use physics::*;
 pub use player::*;
+pub use powerup::*;
 pub use rotation_velocity::*;
 pub use ui::*;

@@ -8,9 +8,15 @@ pub fn update_bullet_lifecycle(
         (Entity, &mut BulletLifecycle, &MeshMaterial2d<ColorMaterial>),
         With<Bullet>,
     >,
+    mut explosions: Query<(Entity, &mut BulletLifecycle), (With<ExplosionVisual>, Without<Bullet>)>,
+    mut lasers: Query<
+        (Entity, &mut BulletLifecycle),
+        (With<LaserBeam>, Without<Bullet>, Without<ExplosionVisual>),
+    >,
     mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
 ) {
+    // Handle bullets with glow effects
     for (bullet_entity, mut lifecycle, material_handle) in bullets.iter_mut() {
         // Update the timer
         lifecycle.lifetime.tick(time.delta());
@@ -31,6 +37,22 @@ pub fn update_bullet_lifecycle(
                 current_intensity,
                 current_intensity * 0.25,
             );
+        }
+    }
+
+    // Handle explosion visuals (no glow effects, just cleanup)
+    for (explosion_entity, mut lifecycle) in explosions.iter_mut() {
+        lifecycle.lifetime.tick(time.delta());
+        if lifecycle.is_expired() {
+            commands.entity(explosion_entity).despawn();
+        }
+    }
+
+    // Handle laser beams (no glow effects, just cleanup)
+    for (laser_entity, mut lifecycle) in lasers.iter_mut() {
+        lifecycle.lifetime.tick(time.delta());
+        if lifecycle.is_expired() {
+            commands.entity(laser_entity).despawn();
         }
     }
 }

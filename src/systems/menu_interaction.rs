@@ -92,6 +92,7 @@ pub fn cleanup_all_entities(
             With<ScoreText>,
             With<LivesText>,
             With<HeartUI>,
+            With<PowerUp>, // Add power-ups to cleanup
         )>,
     >,
 ) {

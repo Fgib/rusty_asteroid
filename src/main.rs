@@ -23,6 +23,8 @@ fn main() {
         .insert_resource(GameScore { score: 0 })
         .insert_resource(PlayerLives::default())
         .insert_resource(DifficultySettings::default())
+        .insert_resource(PlayerPowerUps::default())
+        .insert_resource(PowerUpSpawnTimer::default())
         .insert_resource(AsteroidSpawnTimer {
             timer: Timer::from_seconds(2.0, TimerMode::Repeating),
         })
@@ -42,26 +44,31 @@ fn main() {
         // Game state systems
         .add_systems(
             OnEnter(GameState::Playing),
-            (setup_game, reset_game_resources),
+            (setup_game, reset_game_resources, reset_powerups_system),
         )
         .add_systems(OnExit(GameState::Playing), cleanup_all_entities)
         .add_systems(
             Update,
             (
                 player_movement,
-                player_shoot,
+                enhanced_player_shoot,
                 move_entities,
                 rotate_entities,
                 wrap_around,
                 collision_system,
+                laser_collision_system, // New laser collision system
                 player_asteroid_collision_system,
                 invincibility_visual_system,
                 update_bullet_lifecycle,
                 despawn_asteroids,
                 spawn_asteroids,
+                spawn_powerup_system,      // New power-up spawning
+                powerup_collection_system, // New power-up collection
+                powerup_effect_system,     // New power-up effect management
                 update_score_display,
                 update_lives_display,
                 update_heart_display,
+                update_powerup_display, // New power-up UI
             )
                 .run_if(in_state(GameState::Playing)),
         )

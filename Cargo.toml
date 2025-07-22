@@ -17,7 +17,7 @@ codegen-units = 1
 strip = true
 
 [dependencies]
-bevy = { version = "0.16.1" }
+bevy = { version = "0.16.1", features = ["dynamic_linking"] }
 fastrand = "2.0"
 
 [package.metadata.bundle]
