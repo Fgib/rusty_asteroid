@@ -1,0 +1,151 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*" # Trigger on version tags like v1.0.0
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: rusty_asteroid
+            release_name: rusty_asteroid-linux-x86_64
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: rusty_asteroid.exe
+            release_name: rusty_asteroid-windows-x86_64.exe
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: rusty_asteroid
+            release_name: rusty_asteroid-macos-x86_64
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: rusty_asteroid
+            release_name: rusty_asteroid-macos-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev pkg-config
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+
+      - name: Cache target directory
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-${{ matrix.target }}-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-target-
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p releases
+          cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} releases/${{ matrix.release_name }}
+
+          # Make executable on Unix systems
+          if [[ "${{ matrix.os }}" != "windows-latest" ]]; then
+            chmod +x releases/${{ matrix.release_name }}
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.release_name }}
+          path: releases/${{ matrix.release_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release_files
+          find artifacts -type f -executable -o -name "*.exe" | while read file; do
+            cp "$file" release_files/
+          done
+
+          # Copy README
+          cp releases/README.md release_files/ || echo "README.md not found in releases/"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release_files/*
+          body: |
+            # Rusty Asteroid Release
+
+            Cross-platform builds of the Rusty Asteroid game.
+
+            ## Downloads
+            - **Linux**: `rusty_asteroid-linux-x86_64`
+            - **Windows**: `rusty_asteroid-windows-x86_64.exe`
+            - **macOS Intel**: `rusty_asteroid-macos-x86_64`
+            - **macOS Apple Silicon**: `rusty_asteroid-macos-arm64`
+
+            ## How to Run
+
+            ### Linux/macOS
+            ```bash
+            chmod +x rusty_asteroid-*
+            ./rusty_asteroid-*
+            ```
+
+            ### Windows
+            Just double-click the .exe file or run from command prompt.
+
+            ## Requirements
+            - Graphics: OpenGL 3.3+ support
+            - Audio: System audio support
+
+            Built with Rust and the Bevy engine.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
