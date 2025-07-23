@@ -30,6 +30,7 @@ pub struct PlayerPowerUps {
 }
 
 impl PlayerPowerUps {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             active_effects: Vec::new(),

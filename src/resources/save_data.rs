@@ -50,10 +50,12 @@ impl SaveData {
         self.games_played += 1;
     }
 
+    #[allow(dead_code)]
     pub fn add_asteroids_destroyed(&mut self, count: u32) {
         self.asteroids_destroyed += count;
     }
 
+    #[allow(dead_code)]
     pub fn increment_power_ups_collected(&mut self) {
         self.power_ups_collected += 1;
     }

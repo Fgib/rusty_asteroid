@@ -27,6 +27,7 @@ fn main() {
         .insert_resource(PowerUpSpawnTimer::default())
         .insert_resource(GameSettings::load())
         .insert_resource(SaveData::load())
+        .insert_resource(AsteroidSizeGenerator::default())
         .insert_resource(AsteroidSpawnTimer {
             timer: Timer::from_seconds(2.0, TimerMode::Repeating),
         })

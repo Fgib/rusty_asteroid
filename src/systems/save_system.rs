@@ -21,11 +21,12 @@ pub fn save_game_progress(
 }
 
 // System to track game statistics
+#[allow(dead_code)]
 pub fn track_game_stats(
-    mut save_data: ResMut<SaveData>,
-    mut commands: Commands,
+    _save_data: ResMut<SaveData>,
+    _commands: Commands,
     // Track when asteroids are destroyed
-    asteroid_query: Query<
+    _asteroid_query: Query<
         Entity,
         (
             With<crate::components::Asteroid>,
@@ -33,17 +34,19 @@ pub fn track_game_stats(
         ),
     >,
     // Track when power-ups are collected
-    powerup_events: EventReader<PowerUpCollectedEvent>,
+    _powerup_events: EventReader<PowerUpCollectedEvent>,
 ) {
     // This system would need to be integrated with existing collision systems
     // to properly track when asteroids are destroyed and power-ups collected
 }
 
 // Event for tracking power-up collection
+#[allow(dead_code)]
 #[derive(Event)]
 pub struct PowerUpCollectedEvent;
 
 // System to initialize save data on game start
+#[allow(dead_code)]
 pub fn initialize_save_system(mut commands: Commands) {
     let save_data = SaveData::load();
     commands.insert_resource(save_data);

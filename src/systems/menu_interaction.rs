@@ -110,7 +110,10 @@ pub fn cleanup_all_entities(
             With<ScoreText>,
             With<LivesText>,
             With<HeartUI>,
-            With<PowerUp>, // Add power-ups to cleanup
+            With<PowerUp>,         // Add power-ups to cleanup
+            With<PowerUpEffect>,   // Add power-up effects
+            With<LaserBeam>,       // Add laser beams
+            With<ExplosionVisual>, // Add explosion visuals
         )>,
     >,
 ) {
@@ -124,11 +127,15 @@ pub fn reset_game_resources(
     mut lives: ResMut<PlayerLives>,
     mut spawn_timer: ResMut<AsteroidSpawnTimer>,
     mut fire_timer: ResMut<FireTimer>,
+    mut player_powerups: ResMut<PlayerPowerUps>, // Add powerup resource reset
     difficulty: Res<DifficultySettings>,
 ) {
     // Reset score and lives
     score.score = 0;
     *lives = PlayerLives::default();
+
+    // Reset powerups
+    player_powerups.clear_all();
 
     // Reset timers with difficulty settings
     spawn_timer.timer = Timer::from_seconds(difficulty.asteroid_spawn_rate, TimerMode::Repeating);

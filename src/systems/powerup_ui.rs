@@ -14,7 +14,7 @@ pub fn update_powerup_display(
 ) {
     // Get active power-up info
     let mut powerup_text = String::new();
-    
+
     for effect in powerup_effects.iter() {
         let remaining = effect.time_remaining();
         let power_name = match effect.power_type {

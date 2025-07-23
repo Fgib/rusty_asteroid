@@ -1,3 +1,4 @@
+pub mod asteroid_generator;
 pub mod difficulty;
 pub mod fire_timer;
 pub mod game_score;
@@ -8,6 +9,7 @@ pub mod save_data;
 pub mod settings;
 pub mod spawn_timer;
 
+pub use asteroid_generator::*;
 pub use difficulty::*;
 pub use fire_timer::*;
 pub use game_score::*;

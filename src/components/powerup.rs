@@ -18,6 +18,7 @@ pub struct PowerUp {
 pub struct PowerUpEffect {
     pub power_type: PowerUpType,
     pub timer: Timer,
+    #[allow(dead_code)]
     pub duration: f32,
 }
 
@@ -32,10 +33,6 @@ impl PowerUpEffect {
 
     pub fn time_remaining(&self) -> f32 {
         self.timer.remaining_secs()
-    }
-
-    pub fn progress(&self) -> f32 {
-        1.0 - (self.timer.remaining_secs() / self.duration)
     }
 }
 
@@ -74,6 +71,7 @@ impl ExplosiveBullet {
 pub struct LaserBeam {
     pub damage_per_second: f32,
     pub max_range: f32,
+    #[allow(dead_code)]
     pub width: f32,
 }
 

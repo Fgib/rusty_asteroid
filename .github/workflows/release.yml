@@ -17,27 +17,38 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact_name: rusty_asteroid
-            release_name: rusty_asteroid-linux-x86_64
+            release_name_template: rusty_asteroid-linux-x86_64
 
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: rusty_asteroid.exe
-            release_name: rusty_asteroid-windows-x86_64.exe
+            release_name_template: rusty_asteroid-windows-x86_64.exe
 
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: rusty_asteroid
-            release_name: rusty_asteroid-macos-x86_64
+            release_name_template: rusty_asteroid-macos-x86_64
 
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: rusty_asteroid
-            release_name: rusty_asteroid-macos-arm64
+            release_name_template: rusty_asteroid-macos-arm64
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="dev"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -81,18 +92,29 @@ jobs:
         shell: bash
         run: |
           mkdir -p releases
-          cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} releases/${{ matrix.release_name }}
+          VERSION="${{ steps.get_version.outputs.version }}"
+          RELEASE_NAME="${{ matrix.release_name_template }}"
+
+          # Insert version before file extension (if any)
+          if [[ "$RELEASE_NAME" == *.* ]]; then
+            RELEASE_NAME="${RELEASE_NAME%.*}-${VERSION}.${RELEASE_NAME##*.}"
+          else
+            RELEASE_NAME="${RELEASE_NAME}-${VERSION}"
+          fi
+
+          cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} releases/$RELEASE_NAME
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_ENV
 
           # Make executable on Unix systems
           if [[ "${{ matrix.os }}" != "windows-latest" ]]; then
-            chmod +x releases/${{ matrix.release_name }}
+            chmod +x releases/$RELEASE_NAME
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.release_name }}
-          path: releases/${{ matrix.release_name }}
+          name: ${{ env.release_name }}
+          path: releases/${{ env.release_name }}
 
   release:
     needs: build
@@ -101,6 +123,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -123,15 +152,15 @@ jobs:
         with:
           files: release_files/*
           body: |
-            # Rusty Asteroid Release
+            # Rusty Asteroid Release ${{ steps.get_version.outputs.version }}
 
             Cross-platform builds of the Rusty Asteroid game.
 
             ## Downloads
-            - **Linux**: `rusty_asteroid-linux-x86_64`
-            - **Windows**: `rusty_asteroid-windows-x86_64.exe`
-            - **macOS Intel**: `rusty_asteroid-macos-x86_64`
-            - **macOS Apple Silicon**: `rusty_asteroid-macos-arm64`
+            - **Linux**: `rusty_asteroid-linux-x86_64-${{ steps.get_version.outputs.version }}`
+            - **Windows**: `rusty_asteroid-windows-x86_64-${{ steps.get_version.outputs.version }}.exe`
+            - **macOS Intel**: `rusty_asteroid-macos-x86_64-${{ steps.get_version.outputs.version }}`
+            - **macOS Apple Silicon**: `rusty_asteroid-macos-arm64-${{ steps.get_version.outputs.version }}`
 
             ## How to Run
 

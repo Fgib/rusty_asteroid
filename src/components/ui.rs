@@ -23,6 +23,7 @@ pub struct PauseUI;
 
 // Settings button types
 #[derive(Component)]
+#[allow(dead_code)]
 pub enum SettingsButton {
     BloomToggle,
     VsyncToggle,
@@ -31,6 +32,7 @@ pub enum SettingsButton {
 
 // Pause button types
 #[derive(Component)]
+#[allow(dead_code)]
 pub enum PauseButton {
     Resume,
     Settings,

@@ -4,59 +4,6 @@ use crate::constants::*;
 use crate::resources::*;
 use bevy::prelude::*;
 
-struct WeightedGenerator {
-    min_size: u32,
-    weights: Vec<f32>,
-}
-
-impl WeightedGenerator {
-    fn new(min_size: u32, max_size: u32, rarity_factor: f32, base_probability: f32) -> Self {
-        let range = max_size - min_size + 1;
-        let mut weights = Vec::with_capacity(range as usize);
-        let mut total_weight = 0.0;
-
-        for i in 0..range {
-            let weight = base_probability * (rarity_factor.powi(-(i as i32)));
-            weights.push(weight);
-            total_weight += weight;
-        }
-
-        let mut cumulative = 0.0;
-        for weight in &mut weights {
-            cumulative += *weight / total_weight;
-            *weight = cumulative;
-        }
-
-        Self { min_size, weights }
-    }
-
-    fn generate(&self) -> u32 {
-        let roll = fastrand::f32();
-
-        for (i, &cumulative_prob) in self.weights.iter().enumerate() {
-            if roll < cumulative_prob {
-                return self.min_size + i as u32;
-            }
-        }
-
-        self.min_size + self.weights.len() as u32 - 1
-    }
-}
-
-fn generate_weighted_random(
-    min_size: u32,
-    max_size: u32,
-    rarity_factor: f32,
-    base_probability: f32,
-) -> u32 {
-    let generator = WeightedGenerator::new(min_size, max_size, rarity_factor, base_probability);
-    generator.generate()
-}
-
-fn generate_asteroid_size() -> u32 {
-    generate_weighted_random(1, 10, 2.1, 0.35)
-}
-
 pub fn spawn_asteroid_fragments(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -92,7 +39,7 @@ pub fn spawn_asteroid_fragments(
                 },
                 Health::new(fragment_size),
                 Velocity(velocity),
-                RotationVelocity::random_slow(), // Add random rotation to fragments
+                RotationVelocity::random_slow(),
                 Wraparound,
             ));
         }
@@ -107,6 +54,7 @@ pub fn spawn_asteroids(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     difficulty: Res<DifficultySettings>,
+    asteroid_generator: Res<AsteroidSizeGenerator>,
 ) {
     spawn_timer.timer.tick(time.delta());
 
@@ -116,7 +64,7 @@ pub fn spawn_asteroids(
             let half_height = window.height() / 2.0;
 
             // Choose random side: 0=top, 1=right, 2=bottom, 3=left
-            let side = fastrand::u32(0..4);
+            let side: u8 = fastrand::u8(0..4);
             let spawn_offset = 50.0; // Distance outside screen edge to spawn
 
             let (spawn_pos, velocity) = match side {
@@ -124,9 +72,14 @@ pub fn spawn_asteroids(
                     // Top side - spawn above screen, move towards center with downward bias
                     let x = (fastrand::f32() - 0.5) * window.width();
                     let y = half_height + spawn_offset;
-                    let velocity_x = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                    let velocity_x = (fastrand::f32() - 0.5)
+                        * ASTEROID_SPEED
+                        * difficulty.asteroid_speed_multiplier;
                     let velocity_y = -ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
-                        - fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
+                        - fastrand::f32()
+                            * ASTEROID_SPEED
+                            * difficulty.asteroid_speed_multiplier
+                            * 0.5;
                     (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
                 }
                 1 => {
@@ -134,17 +87,27 @@ pub fn spawn_asteroids(
                     let x = half_width + spawn_offset;
                     let y = (fastrand::f32() - 0.5) * window.height();
                     let velocity_x = -ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
-                        - fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
-                    let velocity_y = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                        - fastrand::f32()
+                            * ASTEROID_SPEED
+                            * difficulty.asteroid_speed_multiplier
+                            * 0.5;
+                    let velocity_y = (fastrand::f32() - 0.5)
+                        * ASTEROID_SPEED
+                        * difficulty.asteroid_speed_multiplier;
                     (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
                 }
                 2 => {
                     // Bottom side - spawn below screen, move towards center with upward bias
                     let x = (fastrand::f32() - 0.5) * window.width();
                     let y = -half_height - spawn_offset;
-                    let velocity_x = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                    let velocity_x = (fastrand::f32() - 0.5)
+                        * ASTEROID_SPEED
+                        * difficulty.asteroid_speed_multiplier;
                     let velocity_y = ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
-                        + fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
+                        + fastrand::f32()
+                            * ASTEROID_SPEED
+                            * difficulty.asteroid_speed_multiplier
+                            * 0.5;
                     (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
                 }
                 _ => {
@@ -152,14 +115,19 @@ pub fn spawn_asteroids(
                     let x = -half_width - spawn_offset;
                     let y = (fastrand::f32() - 0.5) * window.height();
                     let velocity_x = ASTEROID_SPEED * difficulty.asteroid_speed_multiplier
-                        + fastrand::f32() * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier * 0.5;
-                    let velocity_y = (fastrand::f32() - 0.5) * ASTEROID_SPEED * difficulty.asteroid_speed_multiplier;
+                        + fastrand::f32()
+                            * ASTEROID_SPEED
+                            * difficulty.asteroid_speed_multiplier
+                            * 0.5;
+                    let velocity_y = (fastrand::f32() - 0.5)
+                        * ASTEROID_SPEED
+                        * difficulty.asteroid_speed_multiplier;
                     (Vec2::new(x, y), Vec2::new(velocity_x, velocity_y))
                 }
             };
 
-            let size = generate_asteroid_size();
-            let radius = size as f32 * 5.0; // Base radius of 5 units per size level
+            let size: u32 = asteroid_generator.generate();
+            let radius = (size * 5).min(50) as f32; // Base radius of 5 units per size level, max 50
 
             // Health based on size: size 1 = 1 HP, size 10 = 10 HP
             let health = Health::new(size);
