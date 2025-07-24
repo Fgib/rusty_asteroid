@@ -33,15 +33,16 @@ pub fn spawn_powerup_system(
     if spawn_timer.timer.just_finished() {
         // Random chance to spawn a power-up (70% chance)
         if fastrand::f32() < 0.7 {
-            spawn_random_powerup(&mut commands, &mut meshes, &mut materials);
+            spawn_random_powerup(&mut commands, &mut meshes, &mut materials, None);
         }
     }
 }
 
-fn spawn_random_powerup(
+pub fn spawn_random_powerup(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
+    position: Option<Vec3>,
 ) {
     let power_types = [
         PowerUpType::MultiShot,
@@ -53,9 +54,12 @@ fn spawn_random_powerup(
 
     let random_type = power_types[fastrand::usize(..power_types.len())].clone();
 
-    // Random position on screen
-    let x = (fastrand::f32() - 0.5) * 760.0; // -380 to 380
-    let y = (fastrand::f32() - 0.5) * 560.0; // -280 to 280
+    // Use provided position or random position on screen
+    let (x, y) = if let Some(pos) = position {
+        (pos.x, pos.y)
+    } else {
+        ((fastrand::f32() - 0.5) * 760.0, (fastrand::f32() - 0.5) * 560.0)
+    };
 
     let (color, mesh) = get_powerup_visual(&random_type);
 

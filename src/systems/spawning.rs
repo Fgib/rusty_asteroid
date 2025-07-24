@@ -10,12 +10,20 @@ pub fn spawn_asteroid_fragments(
     materials: &mut ResMut<Assets<ColorMaterial>>,
     position: Vec3,
     parent_size: u32,
+    parent_type: &AsteroidType,
 ) {
     if parent_size > 1 {
         let fragment_size = parent_size - 1;
         let fragment_radius = fragment_size as f32 * 5.0;
 
-        let fragment_count = if parent_size >= 5 { 3 } else { 2 };
+        // Create an asteroid of the same type as parent (with some chance to change for ice)
+        let fragment_type = match parent_type {
+            AsteroidType::Ice if fastrand::f32() < 0.3 => AsteroidType::Normal, // 30% chance ice becomes normal
+            _ => parent_type.clone(),
+        };
+
+        let asteroid = Asteroid::new(fragment_size, fragment_type.clone());
+        let fragment_count = asteroid.fragment_count();
 
         for i in 0..fragment_count {
             // Random velocity for fragments
@@ -30,14 +38,16 @@ pub fn spawn_asteroid_fragments(
                 (fastrand::f32() - 0.5) * 20.0,
             );
 
+            let fragment_asteroid = Asteroid::new(fragment_size, fragment_type.clone());
+            let fragment_color = fragment_asteroid.get_color();
+            let fragment_health = fragment_asteroid.max_health();
+
             commands.spawn((
                 Mesh2d(meshes.add(create_asteroid_mesh(fragment_size, fragment_radius))),
-                MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(2.5, 1.5, 3.0)))), // Bright purple glow for fragments
+                MeshMaterial2d(materials.add(ColorMaterial::from(fragment_color))),
                 Transform::from_translation(position + offset.extend(0.0)),
-                Asteroid {
-                    size: fragment_size,
-                },
-                Health::new(fragment_size),
+                fragment_asteroid,
+                Health::new(fragment_health),
                 Velocity(velocity),
                 RotationVelocity::random_slow(),
                 Wraparound,
@@ -54,9 +64,15 @@ pub fn spawn_asteroids(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     difficulty: Res<DifficultySettings>,
+    phase_manager: Res<GamePhaseManager>,
     asteroid_generator: Res<AsteroidSizeGenerator>,
+    asteroid_type_generator: Res<AsteroidTypeGenerator>,
 ) {
-    spawn_timer.timer.tick(time.delta());
+    // Apply phase-based multiplier to timer tick speed
+    let effective_delta = time
+        .delta()
+        .mul_f32(phase_manager.asteroid_spawn_multiplier);
+    spawn_timer.timer.tick(effective_delta);
 
     if spawn_timer.timer.just_finished() {
         if let Ok(window) = windows.single() {
@@ -127,26 +143,35 @@ pub fn spawn_asteroids(
             };
 
             let size: u32 = asteroid_generator.generate();
+            let asteroid_type = asteroid_type_generator.generate();
             let radius = (size * 5).min(50) as f32; // Base radius of 5 units per size level, max 50
 
-            // Health based on size: size 1 = 1 HP, size 10 = 10 HP
-            let health = Health::new(size);
+            let asteroid = Asteroid::new(size, asteroid_type);
+            let asteroid_color = asteroid.get_color();
+            let asteroid_health = asteroid.max_health();
 
-            // Create glowing color based on asteroid size (bigger = more intense glow)
-            let glow_intensity = (size as f32 / 10.0) * 2.0 + 1.5; // 1.5 to 3.5 intensity
-            let asteroid_color = Color::srgb(
-                glow_intensity * 0.8, // Red component
-                glow_intensity * 1.2, // Green component (brighter)
-                glow_intensity * 0.6, // Blue component
-            );
+            // Apply behavior modifier to velocity
+            let behavior_modifier = asteroid.get_behavior_modifier();
+            let modified_velocity = velocity * behavior_modifier;
+
+            // Add some erratic movement for crystal asteroids
+            let final_velocity = if asteroid.asteroid_type == AsteroidType::Crystal {
+                let erratic_factor = Vec2::new(
+                    (fastrand::f32() - 0.5) * 40.0,
+                    (fastrand::f32() - 0.5) * 40.0,
+                );
+                modified_velocity + erratic_factor
+            } else {
+                modified_velocity
+            };
 
             commands.spawn((
                 Mesh2d(meshes.add(create_asteroid_mesh(size, radius))),
                 MeshMaterial2d(materials.add(ColorMaterial::from(asteroid_color))),
                 Transform::from_translation(Vec3::new(spawn_pos.x, spawn_pos.y, 0.0)),
-                Asteroid { size },
-                health,
-                Velocity(velocity),
+                asteroid,
+                Health::new(asteroid_health),
+                Velocity(final_velocity),
                 RotationVelocity::random_slow(), // Add random rotation to asteroids
                 Wraparound,                      // Enable wraparound for asteroids
             ));

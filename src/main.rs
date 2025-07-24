@@ -28,6 +28,10 @@ fn main() {
         .insert_resource(GameSettings::load())
         .insert_resource(SaveData::load())
         .insert_resource(AsteroidSizeGenerator::default())
+        .insert_resource(AsteroidTypeGenerator::default())
+        .insert_resource(EnemySpawnTimer::default())
+        .insert_resource(BossSpawnManager::default())
+        .insert_resource(GamePhaseManager::default())
         .insert_resource(AsteroidSpawnTimer {
             timer: Timer::from_seconds(2.0, TimerMode::Repeating),
         })
@@ -51,7 +55,12 @@ fn main() {
         // Game state systems
         .add_systems(
             OnEnter(GameState::Playing),
-            (setup_game, reset_game_resources, reset_powerups_system),
+            (
+                setup_game,
+                reset_game_resources,
+                reset_powerups_system,
+                reset_game_phase_system,
+            ),
         )
         .add_systems(OnExit(GameState::Playing), cleanup_all_entities)
         .add_systems(
@@ -62,21 +71,59 @@ fn main() {
                 move_entities,
                 rotate_entities,
                 wrap_around,
+            )
+                .run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            Update,
+            (
                 collision_system,
                 laser_collision_system, // New laser collision system
                 player_asteroid_collision_system,
+                player_enemy_bullet_collision_system, // New player vs enemy bullet collision
+                bullet_enemy_collision_system,        // New bullet vs enemy collision
+                bullet_boss_collision_system,         // New bullet vs boss collision
+                bullet_bullet_collision_system,       // New bullet vs bullet collision
+            )
+                .run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            Update,
+            (
                 invincibility_visual_system,
                 update_bullet_lifecycle,
                 despawn_asteroids,
                 spawn_asteroids,
+            )
+                .run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            Update,
+            (
+                spawn_enemy_system,        // New enemy spawning
+                enemy_ai_system,           // New enemy AI
+                enemy_shooting_system,     // New enemy shooting
+                boss_spawn_system,         // New boss spawning
+                boss_ai_system,            // New boss AI
+                game_phase_manager_system, // Game phase management
+                pulsing_effect_system,     // New pulsing effect for visibility
+            )
+                .run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            Update,
+            (
                 spawn_powerup_system,      // New power-up spawning
                 powerup_collection_system, // New power-up collection
                 powerup_effect_system,     // New power-up effect management
                 update_score_display,
                 update_lives_display,
                 update_heart_display,
-                update_powerup_display, // New power-up UI
-                save_game_progress,     // Save system
+                update_powerup_display,  // New power-up UI
+                spawn_boss_health_bar,   // Boss health bar spawning
+                update_boss_health_bar,  // Boss health bar updates
+                despawn_boss_health_bar, // Boss health bar cleanup
+                save_game_progress,      // Save system
             )
                 .run_if(in_state(GameState::Playing)),
         )

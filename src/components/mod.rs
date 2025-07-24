@@ -1,7 +1,9 @@
 pub mod asteroid;
+pub mod boss;
 pub mod bullet;
 pub mod bullet_lifecycle;
 pub mod button_with_text;
+pub mod enemy;
 pub mod health;
 pub mod invincibility;
 pub mod menu;
@@ -13,9 +15,11 @@ pub mod rotation_velocity;
 pub mod ui;
 
 pub use asteroid::*;
+pub use boss::*;
 pub use bullet::*;
 pub use bullet_lifecycle::*;
 pub use button_with_text::*;
+pub use enemy::*;
 pub use health::*;
 pub use invincibility::*;
 pub use menu::*;

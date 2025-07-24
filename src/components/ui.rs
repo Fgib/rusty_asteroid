@@ -14,6 +14,15 @@ pub struct HeartUI {
 #[derive(Component)]
 pub struct PowerUpDisplay;
 
+#[derive(Component)]
+pub struct BossHealthBar;
+
+#[derive(Component)]
+pub struct BossHealthBarFill;
+
+#[derive(Component)]
+pub struct BossPhaseText;
+
 // Menu UI components
 #[derive(Component, Clone)]
 pub struct MenuUI;

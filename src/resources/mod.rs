@@ -1,6 +1,8 @@
 pub mod asteroid_generator;
 pub mod difficulty;
+pub mod enemy_boss;
 pub mod fire_timer;
+pub mod game_phase;
 pub mod game_score;
 pub mod game_state;
 pub mod player_lives;
@@ -11,7 +13,9 @@ pub mod spawn_timer;
 
 pub use asteroid_generator::*;
 pub use difficulty::*;
+pub use enemy_boss::*;
 pub use fire_timer::*;
+pub use game_phase::*;
 pub use game_score::*;
 pub use game_state::*;
 pub use player_lives::*;
